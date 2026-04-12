@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="VenueFlow AI — Smart venue experience platform for large-scale sporting events. Real-time crowd heatmaps, AI concierge, queue predictions, and safety alerts.">
+    <meta name="theme-color" content="#06d6a0">
+    <title>VenueFlow AI — Smart Venue Experience</title>
+
+    <!-- Google Fonts: Inter + Outfit + JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- HERO / TOP BAR                                              -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <header id="top-bar" role="banner">
+        <div class="top-bar-inner">
+            <div class="brand" aria-label="VenueFlow AI">
+                <div class="brand-icon" aria-hidden="true">
+                    <svg viewBox="0 0 36 36" fill="none">
+                        <circle cx="18" cy="18" r="16" stroke="url(#grad)" stroke-width="2.5"/>
+                        <path d="M12 22 L18 10 L24 22 Z" fill="url(#grad)" opacity="0.8"/>
+                        <defs><linearGradient id="grad" x1="0" y1="0" x2="36" y2="36">
+                            <stop offset="0%" stop-color="#06d6a0"/>
+                            <stop offset="100%" stop-color="#118ab2"/>
+                        </linearGradient></defs>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="brand-name">VenueFlow<span class="brand-ai">AI</span></h1>
+                    <p class="brand-tagline" id="venue-name-display">Titan Arena — 50,000 Capacity</p>
+                </div>
+            </div>
+
+            <!-- Live Ticker -->
+            <div class="live-ticker" role="status" aria-live="polite">
+                <div class="ticker-item">
+                    <span class="ticker-dot pulse" aria-hidden="true"></span>
+                    <span class="ticker-label">Phase</span>
+                    <span class="ticker-value" id="ticker-phase">Loading...</span>
+                </div>
+                <div class="ticker-divider" aria-hidden="true"></div>
+                <div class="ticker-item">
+                    <span class="ticker-label">Occupancy</span>
+                    <span class="ticker-value" id="ticker-occupancy">—</span>
+                </div>
+                <div class="ticker-divider" aria-hidden="true"></div>
+                <div class="ticker-item">
+                    <span class="ticker-label">Elapsed</span>
+                    <span class="ticker-value" id="ticker-elapsed">0m</span>
+                </div>
+                <div class="ticker-divider" aria-hidden="true"></div>
+                <div class="ticker-item">
+                    <span class="ticker-label">Clients</span>
+                    <span class="ticker-value" id="ticker-ws">●</span>
+                </div>
+            </div>
+
+            <!-- Controls -->
+            <div class="top-bar-controls">
+                <button id="btn-accessibility" class="icon-btn" aria-label="Accessibility settings" title="Accessibility">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="4" r="2"/><path d="M12 6v8m-4-6h8M8 20l4-6 4 6"/></svg>
+                </button>
+                <button id="btn-theme-toggle" class="icon-btn" aria-label="Toggle light/dark mode" title="Toggle theme">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.73 12.73 1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- NAVIGATION TABS                                             -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <nav id="main-nav" role="navigation" aria-label="Main navigation">
+        <div class="nav-inner">
+            <button class="nav-tab active" data-tab="map" role="tab" aria-selected="true" aria-controls="panel-map" id="tab-map">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M1 6v16l7-4 8 4 7-4V2l-7 4-8-4-7 4z"/><path d="M8 2v16m8-12v16"/></svg>
+                <span>Live Map</span>
+            </button>
+            <button class="nav-tab" data-tab="chat" role="tab" aria-selected="false" aria-controls="panel-chat" id="tab-chat">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                <span>AI Chat</span>
+            </button>
+            <button class="nav-tab" data-tab="queues" role="tab" aria-selected="false" aria-controls="panel-queues" id="tab-queues">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                <span>Queues</span>
+            </button>
+            <button class="nav-tab" data-tab="alerts" role="tab" aria-selected="false" aria-controls="panel-alerts" id="tab-alerts">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                <span>Alerts</span>
+                <span class="nav-badge" id="alert-badge" aria-label="alert count" hidden>0</span>
+            </button>
+            <button class="nav-tab" data-tab="dashboard" role="tab" aria-selected="false" aria-controls="panel-dashboard" id="tab-dashboard">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                <span>Dashboard</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- TAB PANELS                                                  -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <main id="main-content" role="main">
+
+        <!-- ── MAP PANEL ──────────────────────────────────────── -->
+        <section id="panel-map" class="tab-panel active" role="tabpanel" aria-labelledby="tab-map">
+            <div class="panel-grid map-layout">
+                <!-- Venue Map -->
+                <div class="card map-card" id="map-container">
+                    <div class="card-header">
+                        <h2>🏟️ Live Crowd Heatmap</h2>
+                        <div class="map-legend" aria-label="Density legend">
+                            <span class="legend-item"><span class="legend-dot" style="background:#06d6a0"></span>Low</span>
+                            <span class="legend-item"><span class="legend-dot" style="background:#ffd166"></span>Moderate</span>
+                            <span class="legend-item"><span class="legend-dot" style="background:#ef476f"></span>High</span>
+                            <span class="legend-item"><span class="legend-dot" style="background:#d62828"></span>Critical</span>
+                        </div>
+                    </div>
+                    <div class="map-wrapper" id="venue-map" role="img" aria-label="Stadium crowd density heatmap">
+                        <!-- SVG map rendered by map.js -->
+                    </div>
+                </div>
+
+                <!-- Side Panel — Zone Details + Gate Status -->
+                <div class="map-sidebar">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>📍 Zone Details</h3>
+                        </div>
+                        <div id="zone-details" class="zone-details-list">
+                            <p class="placeholder-text">Click a zone on the map for details</p>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>🚪 Gate Status</h3>
+                        </div>
+                        <div id="gate-status" class="gate-status-list">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                    <div class="card phase-card">
+                        <div class="card-header">
+                            <h3>⏱️ Event Phase</h3>
+                        </div>
+                        <div id="phase-display" class="phase-display">
+                            <div class="phase-label" id="phase-label">Loading...</div>
+                            <div class="phase-description" id="phase-description"></div>
+                            <div class="phase-progress-bar">
+                                <div class="phase-progress-fill" id="phase-progress" style="width:0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── CHAT PANEL ─────────────────────────────────────── -->
+        <section id="panel-chat" class="tab-panel" role="tabpanel" aria-labelledby="tab-chat" hidden>
+            <div class="panel-grid chat-layout">
+                <div class="card chat-card">
+                    <div class="card-header">
+                        <h2>🤖 AI Concierge</h2>
+                        <span class="agent-badge" id="current-agent-badge">Ready</span>
+                    </div>
+
+                    <!-- Chat Messages -->
+                    <div class="chat-messages" id="chat-messages" role="log" aria-label="Chat conversation" aria-live="polite">
+                        <div class="chat-bubble system">
+                            <div class="bubble-avatar" aria-hidden="true">🏟️</div>
+                            <div class="bubble-content">
+                                <p>Welcome to <strong>Titan Arena!</strong> I'm your AI assistant powered by multiple specialized agents:</p>
+                                <ul>
+                                    <li>🧭 <strong>Navigator</strong> — Directions &amp; exit routes</li>
+                                    <li>🍕 <strong>Foodie</strong> — Food recs &amp; queue times</li>
+                                    <li>🛡️ <strong>Safety</strong> — Crowd alerts &amp; emergencies</li>
+                                </ul>
+                                <p>Ask me anything!</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="chat-quick-actions" role="group" aria-label="Quick questions">
+                        <button class="quick-btn" data-message="Where should I eat? What has the shortest queue?" aria-label="Best food option">🍔 Best food?</button>
+                        <button class="quick-btn" data-message="How do I get to the North Stand from here?" aria-label="Directions">🧭 Directions</button>
+                        <button class="quick-btn" data-message="What's the nearest restroom with short wait?" aria-label="Nearest restroom">🚻 Restroom</button>
+                        <button class="quick-btn" data-message="Is it safe right now? Any crowded areas to avoid?" aria-label="Safety check">🛡️ Safety</button>
+                        <button class="quick-btn" data-message="What's my best exit strategy? I'm parked in Lot A." aria-label="Exit strategy">🚗 Exit plan</button>
+                    </div>
+
+                    <!-- Input -->
+                    <form class="chat-input-form" id="chat-form" role="search" aria-label="Send a message">
+                        <div class="chat-input-wrapper">
+                            <select id="user-zone-select" aria-label="Your current zone" class="zone-select">
+                                <option value="north">📍 North Stand</option>
+                                <option value="south">South Stand</option>
+                                <option value="east">East Wing</option>
+                                <option value="west">West Wing</option>
+                                <option value="ne">NE Corner</option>
+                                <option value="nw">NW Corner</option>
+                                <option value="se">SE Corner</option>
+                                <option value="sw">SW Corner</option>
+                                <option value="concourse_n">North Concourse</option>
+                                <option value="concourse_s">South Concourse</option>
+                                <option value="concourse_e">East Concourse</option>
+                                <option value="concourse_w">West Concourse</option>
+                            </select>
+                            <input type="text" id="chat-input" placeholder="Ask me anything about the venue..." autocomplete="off" maxlength="500" aria-label="Type your message">
+                            <button type="submit" class="send-btn" id="chat-send-btn" aria-label="Send message">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2 11 13"/><path d="M22 2 15 22 11 13 2 9z"/></svg>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── QUEUES PANEL ───────────────────────────────────── -->
+        <section id="panel-queues" class="tab-panel" role="tabpanel" aria-labelledby="tab-queues" hidden>
+            <div class="queue-controls">
+                <h2>⏱️ Live Queue Board</h2>
+                <div class="queue-filters" role="group" aria-label="Filter queues">
+                    <button class="filter-btn active" data-filter="all">All</button>
+                    <button class="filter-btn" data-filter="food">🍔 Food</button>
+                    <button class="filter-btn" data-filter="restroom">🚻 Restroom</button>
+                    <button class="filter-btn" data-filter="merchandise">🛍️ Merch</button>
+                </div>
+                <div class="queue-sort" role="group" aria-label="Sort queues">
+                    <button class="sort-btn active" data-sort="wait">Shortest First</button>
+                    <button class="sort-btn" data-sort="name">A-Z</button>
+                </div>
+            </div>
+            <div class="queue-grid" id="queue-grid" role="list" aria-label="Queue wait times">
+                <!-- Populated by JS -->
+            </div>
+        </section>
+
+        <!-- ── ALERTS PANEL ───────────────────────────────────── -->
+        <section id="panel-alerts" class="tab-panel" role="tabpanel" aria-labelledby="tab-alerts" hidden>
+            <div class="alerts-layout">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>🚨 Crowd Intelligence</h2>
+                    </div>
+                    <div class="alerts-metrics" id="alerts-metrics">
+                        <div class="metric-card">
+                            <div class="metric-value" id="crowd-health-score">—</div>
+                            <div class="metric-label">Crowd Health Score</div>
+                            <div class="metric-bar"><div class="metric-bar-fill" id="crowd-health-bar" style="width:0%"></div></div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value" id="risk-level">—</div>
+                            <div class="metric-label">Risk Level</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value" id="danger-zone-count">0</div>
+                            <div class="metric-label">Danger Zones</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header"><h3>💡 AI Insights</h3></div>
+                    <ul class="insight-list" id="insight-list" role="list"></ul>
+                </div>
+
+                <div class="card">
+                    <div class="card-header"><h3>🔮 Predictions</h3></div>
+                    <ul class="prediction-list" id="prediction-list" role="list"></ul>
+                </div>
+
+                <div class="card">
+                    <div class="card-header"><h3>📋 Recommendations</h3></div>
+                    <ul class="recommendation-list" id="recommendation-list" role="list"></ul>
+                </div>
+
+                <div class="card">
+                    <div class="card-header"><h3>⚠️ Active Alerts</h3></div>
+                    <div id="active-alerts-list" class="alerts-feed" role="log" aria-label="Active alerts">
+                        <p class="placeholder-text">No active alerts — all clear! ✅</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── DASHBOARD PANEL ────────────────────────────────── -->
+        <section id="panel-dashboard" class="tab-panel" role="tabpanel" aria-labelledby="tab-dashboard" hidden>
+            <div class="dashboard-layout">
+                <!-- Top Stats Row -->
+                <div class="stats-row">
+                    <div class="stat-card gradient-emerald">
+                        <div class="stat-value" id="dash-occupancy">—</div>
+                        <div class="stat-label">Total Occupancy</div>
+                        <div class="stat-sub" id="dash-occupancy-pct">0%</div>
+                    </div>
+                    <div class="stat-card gradient-blue">
+                        <div class="stat-value" id="dash-phase">—</div>
+                        <div class="stat-label">Current Phase</div>
+                        <div class="stat-sub" id="dash-elapsed">0m elapsed</div>
+                    </div>
+                    <div class="stat-card gradient-amber">
+                        <div class="stat-value" id="dash-avg-wait">—</div>
+                        <div class="stat-label">Avg Food Wait</div>
+                        <div class="stat-sub">minutes</div>
+                    </div>
+                    <div class="stat-card gradient-coral">
+                        <div class="stat-value" id="dash-in-queues">—</div>
+                        <div class="stat-label">People in Queues</div>
+                        <div class="stat-sub">across all stalls</div>
+                    </div>
+                </div>
+
+                <!-- Zone Density Table -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>📊 Zone Density Rankings</h3>
+                    </div>
+                    <div class="table-wrapper">
+                        <table class="data-table" id="zone-table" aria-label="Zone density rankings">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Zone</th>
+                                    <th scope="col">Type</th>
+                                    <th scope="col">Occupancy</th>
+                                    <th scope="col">Capacity</th>
+                                    <th scope="col">Density</th>
+                                    <th scope="col">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="zone-table-body">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Bottom row: Gates + Parking -->
+                <div class="dashboard-bottom-row">
+                    <div class="card">
+                        <div class="card-header"><h3>🚪 Gate Flow</h3></div>
+                        <div id="dash-gates" class="dash-gates-grid"></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><h3>🅿️ Parking Status</h3></div>
+                        <div id="dash-parking" class="dash-parking-grid"></div>
+                    </div>
+                </div>
+
+                <!-- Simulation Controls -->
+                <div class="card sim-controls-card">
+                    <div class="card-header"><h3>⚙️ Simulation Controls</h3></div>
+                    <div class="sim-controls">
+                        <div class="sim-control-group">
+                            <label for="speed-slider">Speed: <span id="speed-value">10x</span></label>
+                            <input type="range" id="speed-slider" min="1" max="60" value="10" aria-label="Simulation speed">
+                        </div>
+                        <div class="sim-control-group">
+                            <label>Jump to Phase:</label>
+                            <div class="phase-buttons" role="group" aria-label="Jump to event phase">
+                                <button class="phase-jump-btn" data-phase="pre_event">Pre-Event</button>
+                                <button class="phase-jump-btn" data-phase="near_kickoff">Rush Hour</button>
+                                <button class="phase-jump-btn" data-phase="first_half">1st Half</button>
+                                <button class="phase-jump-btn" data-phase="halftime">Halftime</button>
+                                <button class="phase-jump-btn" data-phase="post_event">Post-Event</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- TOAST NOTIFICATION CONTAINER                                -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <div id="toast-container" class="toast-container" role="alert" aria-live="assertive" aria-atomic="true"></div>
+
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- SCRIPTS                                                     -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <script src="/static/js/app.js"></script>
+    <script src="/static/js/map.js"></script>
+    <script src="/static/js/chat.js"></script>
+    <script src="/static/js/queue.js"></script>
+    <script src="/static/js/alerts.js"></script>
+    <script src="/static/js/dashboard.js"></script>
+</body>
+</html>
