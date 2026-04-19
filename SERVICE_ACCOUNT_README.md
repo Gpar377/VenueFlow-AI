@@ -11,6 +11,8 @@ Navigate to **IAM & Admin > Service Accounts** and click **CREATE SERVICE ACCOUN
 In Step 2 (Grant this service account access to project), add the following roles:
 - **Cloud Run Admin**: Allows deploying and managing Cloud Run services.
 - **Cloud Build Editor**: Required to build the Docker image in the cloud.
+- **Storage Admin**: (REQUIRED) Allows Cloud Build to use the temporary storage bucket.
+- **Service Usage Consumer**: (REQUIRED) Allows the account to consume project resources.
 - **Artifact Registry Administrator**: Allows pushing the container image to the registry.
 - **Service Account User**: Allows the deployment to "act as" the service account.
 
