@@ -143,7 +143,14 @@ const App = (() => {
         }
 
         // Update phase display
-        if (data.timeline) updatePhaseDisplay(data.timeline);
+        if (data.timeline) {
+            updatePhaseDisplay(data.timeline);
+            if (data.timeline.current_phase === 'emergency') {
+                document.body.classList.add('emergency-mode');
+            } else {
+                document.body.classList.remove('emergency-mode');
+            }
+        }
     }
 
     // ── Ticker Update ────────────────────────────────────────
@@ -270,7 +277,11 @@ const App = (() => {
                     showToast('Error', 'Failed to jump phase', 'critical');
                 }
                 btn.disabled = false;
-                btn.textContent = btn.dataset.phase.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()).replace('Pre Event','Pre-Event').replace('Near Kickoff','Rush Hour').replace('First Half','1st Half').replace('Post Event','Post-Event');
+                if (phase === 'emergency') {
+                    btn.textContent = '🚨 TRIGGER EMERGENCY';
+                } else {
+                    btn.textContent = btn.dataset.phase.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()).replace('Pre Event','Pre-Event').replace('Near Kickoff','Rush Hour').replace('First Half','1st Half').replace('Post Event','Post-Event');
+                }
             });
         });
     }
@@ -285,14 +296,27 @@ const App = (() => {
         setTimeout(() => toast.remove(), 5000);
     }
 
-    // ── API Helper ───────────────────────────────────────────
-    async function api(url, options = {}) {
-        const res = await fetch(url, options);
-        if (!res.ok) {
-            const err = await res.json().catch(() => ({}));
-            throw new Error(err.detail || `HTTP ${res.status}`);
+    // ── API Helper (Enterprise Standard with Retries) ───────
+    async function api(url, options = {}, retries = 3) {
+        for (let i = 0; i <= retries; i++) {
+            try {
+                const res = await fetch(url, options);
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.detail || `HTTP ${res.status}`);
+                }
+                return await res.json();
+            } catch (e) {
+                const isTransient = i < retries && (e.message.includes('50') || e.message.includes('Failed to fetch'));
+                if (isTransient) {
+                    const delay = Math.pow(2, i) * 1000;
+                    console.warn(`Transient API error. Retrying in ${delay}ms...`, e.message);
+                    await new Promise(r => setTimeout(r, delay));
+                    continue;
+                }
+                throw e;
+            }
         }
-        return res.json();
     }
 
     // ── Animate Value ────────────────────────────────────────
