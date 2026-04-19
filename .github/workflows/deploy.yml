@@ -37,6 +37,7 @@ jobs:
           docker push gcr.io/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}
 
       - name: Deploy to Cloud Run
+        id: deploy
         uses: google-github-actions/deploy-cloudrun@v2
         with:
           service: ${{ env.SERVICE_NAME }}
@@ -46,6 +47,7 @@ jobs:
             GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
             DEBUG=False
           flags: "--allow-unauthenticated"
+          wait: true
 
-      - name: Show Output URL
+      - name: Show Output URL 🚀
         run: echo "🚀 VenueFlow AI is live at ${{ steps.deploy.outputs.url }}"
