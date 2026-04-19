@@ -59,6 +59,9 @@ class QueueEngine:
 
             # Update queue length
             sp.queue_length = max(0, sp.queue_length + new_arrivals - served)
+            
+            if phase == EventPhase.EMERGENCY:
+                sp.queue_length = max(0, sp.queue_length - int(sp.queue_length * 0.5))
 
             # Add noise for organic feel
             if sp.queue_length > 3:
@@ -92,6 +95,9 @@ class QueueEngine:
             "medical": 0.2,
         }
         base = base_rates.get(sp.service_type, 1.0)
+
+        if config.phase == EventPhase.EMERGENCY:
+            return 0.0
 
         # Phase multiplier — halftime = huge food/restroom rush
         phase_mult = config.concourse_activity
@@ -151,7 +157,9 @@ class QueueEngine:
         phase = self.timeline.current_phase
         wt = sp.wait_time_minutes
 
-        if phase == EventPhase.HALFTIME:
+        if phase == EventPhase.EMERGENCY:
+            return "EVACUATE IMMEDIATELY. DO NOT WAIT IN QUEUE."
+        elif phase == EventPhase.HALFTIME:
             return "Wait 10-15 min — queues peak during halftime"
         elif phase == EventPhase.FIRST_HALF:
             return "Now is a great time — most fans are seated!"

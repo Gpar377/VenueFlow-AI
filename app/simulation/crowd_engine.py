@@ -61,7 +61,14 @@ class CrowdEngine:
 
         total_arrivals = 0
         for gate in self.venue.gates.values():
-            if not gate.is_open or gate.gate_type == "emergency":
+            if not gate.is_open:
+                continue
+            
+            # During emergency, only departures happen, no arrivals!
+            if config.phase == EventPhase.EMERGENCY:
+                continue
+
+            if gate.gate_type == "emergency" and config.phase != EventPhase.EMERGENCY:
                 continue
 
             # Base arrival rate scaled by phase
@@ -89,9 +96,19 @@ class CrowdEngine:
             if zone.current_occupancy <= 0:
                 continue
 
+            base_departure_rate = config.departure_rate
+            if config.phase == EventPhase.EMERGENCY:
+                # Everyone is rushing out
+                base_departure_rate = 1.0
+
             departure_count = int(
-                zone.current_occupancy * config.departure_rate * random.uniform(0.3, 1.0) / 12
+                zone.current_occupancy * base_departure_rate * random.uniform(0.5, 1.0) / 12
             )
+            
+            # Massive increase during emergency (e.g., 5x faster evacuation simulation step)
+            if config.phase == EventPhase.EMERGENCY:
+                departure_count = int(zone.current_occupancy * 0.15) # 15% drop per tick
+                
             departure_count = min(departure_count, zone.current_occupancy)
             zone.current_occupancy -= departure_count
             total_departures += departure_count
@@ -151,18 +168,24 @@ class CrowdEngine:
 
     def _update_gate_flows(self, config):
         """Update gate flow rates based on current phase."""
+        is_emergency = self.timeline.current_phase == EventPhase.EMERGENCY
+
         for gate in self.venue.gates.values():
+            if is_emergency:
+                gate.is_open = True
+                
             if not gate.is_open:
                 gate.current_flow_rate = 0
                 continue
 
-            if config.arrival_rate > 0:
+            if config.arrival_rate > 0 and not is_emergency:
                 gate.current_flow_rate = int(
                     gate.capacity_per_minute * config.arrival_rate * random.uniform(0.5, 1.1)
                 )
-            elif config.departure_rate > 0:
+            elif config.departure_rate > 0 or is_emergency:
+                rate_mult = 1.5 if is_emergency else 1.0
                 gate.current_flow_rate = int(
-                    gate.capacity_per_minute * config.departure_rate * random.uniform(0.4, 1.0)
+                    gate.capacity_per_minute * config.departure_rate * rate_mult * random.uniform(0.8, 1.0)
                 )
             else:
                 gate.current_flow_rate = int(gate.capacity_per_minute * 0.05 * random.uniform(0, 1))

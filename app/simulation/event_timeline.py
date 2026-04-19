@@ -18,6 +18,7 @@ class EventPhase(str, Enum):
     SECOND_HALF = "second_half"      # Game in progress
     FINAL_MINUTES = "final_minutes"  # Last 10 min — early leavers
     POST_EVENT = "post_event"        # Mass exodus
+    EMERGENCY = "emergency"          # Manual override: evacuation
 
 
 @dataclass
@@ -124,6 +125,17 @@ PHASE_CONFIGS = {
         alert_probability=0.04,
         description="Full-time whistle! Everyone heading for exits. Peak congestion at gates.",
     ),
+    EventPhase.EMERGENCY: PhaseConfig(
+        phase=EventPhase.EMERGENCY,
+        label="🚨 EVACUATION",
+        duration_minutes=0,
+        arrival_rate=0.0,
+        departure_rate=1.0,
+        concourse_activity=0.9,
+        seat_occupancy_target=0.0,
+        alert_probability=1.0,
+        description="EMERGENCY EVACUATION IN PROGRESS. All gates open. Proceed to nearest exit.",
+    ),
 }
 
 
@@ -150,9 +162,12 @@ class EventTimeline:
         self.phase_elapsed_seconds: int = 0
         self.is_finished: bool = False
         self.speed_multiplier: float = 10.0  # 10x real-time for demo
+        self.override_phase: Optional[EventPhase] = None
 
     @property
     def current_phase(self) -> EventPhase:
+        if self.override_phase:
+            return self.override_phase
         return PHASE_ORDER[min(self.current_phase_index, len(PHASE_ORDER) - 1)]
 
     @property
@@ -190,7 +205,11 @@ class EventTimeline:
         Advance the timeline by real_seconds * speed_multiplier.
         Returns the new EventPhase if a phase transition occurred, else None.
         """
-        if self.is_finished:
+        if self.is_finished and not self.override_phase:
+            return None
+
+        # Do not advance internal clock if we are in override mode
+        if self.override_phase:
             return None
 
         sim_seconds = int(real_seconds * self.speed_multiplier)
@@ -231,6 +250,11 @@ class EventTimeline:
 
     def jump_to_phase(self, phase: EventPhase):
         """Jump directly to a specific phase (for demo purposes)."""
+        if phase == EventPhase.EMERGENCY:
+            self.override_phase = EventPhase.EMERGENCY
+            return
+            
+        self.override_phase = None
         if phase in PHASE_ORDER:
             self.current_phase_index = PHASE_ORDER.index(phase)
             self.phase_elapsed_seconds = 0
