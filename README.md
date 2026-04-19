@@ -4,7 +4,7 @@
 
 ![VenueFlow AI Preview](./app/static/venueflow_frontend_verification.webp)
 
-**VenueFlow AI** is a high-performance, production-ready venue concierge and safety management system built for the Google DeepMind Challenge. It transforms the physical event experience by merging real-time physics-based simulation with Google's **Gemini 2.0 Flash** model to provide attendees with predictive, personalized, and safe guidance.
+**VenueFlow AI** is a high-performance, production-ready venue concierge and safety management system built for the **PromptWars: Virtual** challenge by **Google for Developers** & **Hack2Skill**. It transforms the physical event experience by merging real-time physics-based simulation with Google's **Gemini 2.0 Flash** model to provide attendees with predictive, personalized, and safe guidance.
 
 ---
 
@@ -56,4 +56,4 @@ python -m pytest tests/
 ```
 
 ---
-*Developed for the Google Deepmind Challenge. Dedicated to making live events safer, smarter, and smoother.*
+*Developed for PromptWars: Virtual. Built with Google Antigravity. Dedicated to making live events safer, smarter, and smoother.*
