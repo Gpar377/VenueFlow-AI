@@ -1,5 +1,7 @@
 # VenueFlow AI: Next-Gen Crowd Intelligence & Safety Platform
 
+![Deploy to Cloud Run](https://github.com/Gpar377/VenueFlow-AI/actions/workflows/deploy.yml/badge.svg)
+
 ![VenueFlow AI Preview](./app/static/venueflow_frontend_verification.webp)
 
 **VenueFlow AI** is a high-performance, production-ready venue concierge and safety management system built for the Google DeepMind Challenge. It transforms the physical event experience by merging real-time physics-based simulation with Google's **Gemini 2.0 Flash** model to provide attendees with predictive, personalized, and safe guidance.
