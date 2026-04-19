@@ -97,13 +97,18 @@ def get_ai_response(
     alerts_info: str = "No active alerts.",
     danger_zones: str = "No danger zones detected.",
     user_zone: str = "unknown",
+    is_emergency: bool = False,
 ) -> Dict[str, Any]:
     """
     Main entry point — processes a user message through the multi-agent system.
     Returns structured response with agent info and message.
     """
     # Step 1: Route the query
-    agent, confidence = route_query(user_message)
+    if is_emergency:
+        agent = "safety"
+        confidence = 1.0
+    else:
+        agent, confidence = route_query(user_message)
 
     # Step 2: Build specialist prompt with full context
     if agent == "navigator":
