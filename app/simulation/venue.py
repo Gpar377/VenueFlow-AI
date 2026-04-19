@@ -11,7 +11,18 @@ import math
 
 @dataclass
 class Zone:
-    """A section of the stadium (e.g., North Stand, East Wing)."""
+    """
+    Represents a discrete physical section of the stadium.
+    
+    Attributes:
+        id (str): Unique identifier for the zone.
+        name (str): Human-readable name.
+        capacity (int): Maximum safe occupancy.
+        current_occupancy (int): Current number of persons in zone.
+        zone_type (str): Categorization (seating, concourse, etc).
+        adjacent_zones (List[str]): List of neighbor zone IDs for flow modeling.
+        gates (List[str]): List of associated gate IDs.
+    """
     id: str
     name: str
     capacity: int
@@ -58,7 +69,11 @@ class Zone:
 
 @dataclass
 class Gate:
-    """An entry/exit gate."""
+    """
+    Represents an entry, exit, or emergency portal.
+    
+    Calculates congestion based on current flow vs physical throughput capacity.
+    """
     id: str
     name: str
     zone_id: str
@@ -100,7 +115,11 @@ class Gate:
 
 @dataclass
 class ServicePoint:
-    """A food stall, restroom, or merchandise shop."""
+    """
+    Represents a point of interest where queues form (F&B, Restrooms, etc).
+    
+    Implements localized queueing theory (M/M/c) for wait time approximation.
+    """
     id: str
     name: str
     zone_id: str
@@ -182,8 +201,11 @@ class ParkingLot:
 
 class Venue:
     """
-    Complete stadium model — 50,000 seat venue.
-    Defines all zones, gates, service points, and parking.
+    The Digital Twin representation of the physical stadium.
+    
+    Orchestrates the relationship between seating zones, concourse zones,
+    gates, and service points. Responsible for calculating aggregate metrics
+    such as total occupancy and venue-wide density.
     """
 
     def __init__(self, capacity: int = 50000):
