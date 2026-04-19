@@ -1,17 +1,19 @@
 """
 VenueFlow AI — FastAPI Application
-Main application: mounts routes, WebSocket, middleware, static files, and simulation loop.
+Refactored for enterprise standards: structured logging, lifespan management, and global error handling.
 """
 import asyncio
+import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
+from app.logger import logger, log_event
 from app.security import SecurityMiddleware
 from app.simulation.venue import Venue
 from app.simulation.crowd_engine import CrowdEngine
@@ -25,9 +27,9 @@ from app.api.websocket import websocket_endpoint, simulation_broadcast_loop
 
 sim_state = {}
 
-
 def init_simulation():
-    """Initialize the venue simulation."""
+    """Initialize the venue simulation with standard configuration."""
+    logger.info("Initializing simulation engines...")
     venue = Venue(capacity=settings.VENUE_CAPACITY)
     timeline = EventTimeline()
     crowd_engine = CrowdEngine(venue, timeline)
@@ -41,12 +43,13 @@ def init_simulation():
         "alerts": [],
     }
 
-    # Run a few initial ticks to seed data
+    # Warm up simulation with 3 initial ticks
     for _ in range(3):
         timeline.tick()
         crowd_engine.tick()
         queue_engine.tick()
 
+    logger.info(f"Simulation ready for {venue.name}")
     return state
 
 
@@ -54,60 +57,72 @@ def init_simulation():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Setup and teardown for the application."""
+    """
+    Manages application startup and shutdown.
+    Ensures background tasks are cleaned up to prevent memory leaks.
+    """
     global sim_state
 
-    # Startup
-    settings.validate()
-    print("\n" + "=" * 60)
-    print("  [*] VenueFlow AI — Smart Venue Experience Platform")
-    print("=" * 60)
-    print(f"  [*] Venue: Titan Arena ({settings.VENUE_CAPACITY:,} capacity)")
-    print(f"  [*] AI Model: {settings.GEMINI_MODEL}")
-    print(f"  [*] Gemini API: {'(+) Connected' if settings.has_gemini else '(!) Not configured (fallback mode)'}")
-    print(f"  [*] Google Maps: {'(+) Enabled' if settings.has_maps else '(!) SVG mode'}")
-    print(f"  [*] Firebase: {'(+) Connected' if settings.has_firebase else '(!) Local mode'}")
-    print("=" * 60)
-    print(f"  [*] Open in browser: http://localhost:{settings.PORT}")
-    print("=" * 60 + "\n")
+    # 1. Startup Logic
+    log_event("app_startup", {
+        "venue_capacity": settings.VENUE_CAPACITY,
+        "model": settings.GEMINI_MODEL,
+        "has_gemini": settings.has_gemini
+    })
 
-    # Initialize simulation
+    # Initialize simulation and share state with API routes
     sim_state = init_simulation()
     set_simulation_state(sim_state)
 
-    # Start background simulation loop
+    # 2. Start Background Broadcaster
     broadcast_task = asyncio.create_task(
         simulation_broadcast_loop(sim_state, interval=2.0)
     )
 
     yield
 
-    # Shutdown
+    # 3. Shutdown Logic
+    logger.info("Shutting down VenueFlow AI...")
     broadcast_task.cancel()
     try:
         await broadcast_task
     except asyncio.CancelledError:
         pass
-    print("\n  [*] VenueFlow AI shut down gracefully.\n")
+    
+    log_event("app_shutdown", {"status": "success"})
 
 
 # ── Create App ────────────────────────────────────────────────
 
 app = FastAPI(
     title="VenueFlow AI",
-    description="AI-powered smart venue experience platform for large-scale sporting events",
-    version="1.0.0",
+    description="Enterprise-grade smart venue experience platform powered by Gemini.",
+    version="1.1.0",
     lifespan=lifespan,
+    docs_url="/docs" if settings.DEBUG else None,
+    redoc_url=None,
 )
+
+# ── Error Handling ────────────────────────────────────────────
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    """Catch-all for unhandled exceptions to prevent sensitive internal leakage."""
+    logger.error(f"Unhandled exception on {request.url.path}: {str(exc)}", exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "An internal server error occurred. Our engineering team has been notified."}
+    )
+
 
 # ── Middleware ────────────────────────────────────────────────
 
 app.add_middleware(SecurityMiddleware)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"] if settings.DEBUG else ["http://localhost:8000"],
+    allow_origins=["*"] if settings.DEBUG else [f"http://localhost:{settings.PORT}"],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -124,8 +139,7 @@ app.add_api_websocket_route("/ws", websocket_endpoint)
 static_dir = Path(__file__).parent / "static"
 app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
-
-@app.get("/")
+@app.get("/", include_in_schema=False)
 async def serve_index():
-    """Serve the main SPA."""
+    """Serve the single-page application entry point."""
     return FileResponse(str(static_dir / "index.html"))

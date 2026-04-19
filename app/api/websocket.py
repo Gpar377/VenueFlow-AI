@@ -1,29 +1,39 @@
 """
 VenueFlow AI — WebSocket Handler
 Real-time push updates for crowd density, queues, and alerts.
+Optimized for enterprise reliability with error logging and heartbeats.
 """
 import asyncio
 import json
 from typing import Set
 
 from fastapi import WebSocket, WebSocketDisconnect
+from app.logger import logger
 
 
 class ConnectionManager:
-    """Manages WebSocket connections and broadcasts updates."""
+    """Manages WebSocket connections and broadcasts updates safely."""
 
     def __init__(self):
+        # Using a set for O(1) membership operations
         self.active_connections: Set[WebSocket] = set()
 
     async def connect(self, websocket: WebSocket):
+        """Accepts and tracks a new connection."""
         await websocket.accept()
         self.active_connections.add(websocket)
+        logger.debug(f"Client connected. Active: {len(self.active_connections)}")
 
     def disconnect(self, websocket: WebSocket):
+        """Removes a connection from tracked set."""
         self.active_connections.discard(websocket)
+        logger.debug(f"Client disconnected. Active: {len(self.active_connections)}")
 
     async def broadcast(self, data: dict):
-        """Send data to all connected clients."""
+        """
+        Sends JSON-serialized data to all active clients.
+        Handles individual connection failures without crashing the broadcast.
+        """
         if not self.active_connections:
             return
 
@@ -33,30 +43,29 @@ class ConnectionManager:
         for connection in self.active_connections:
             try:
                 await connection.send_text(message)
-            except Exception:
+            except Exception as e:
+                logger.warning(f"Failed to send to client {id(connection)}: {str(e)}")
                 disconnected.add(connection)
 
-        # Clean up disconnected clients
+        # Cleanup failed connections
         for conn in disconnected:
-            self.active_connections.discard(conn)
-
-    @property
-    def client_count(self) -> int:
-        return len(self.active_connections)
+            self.disconnect(conn)
 
 
-# Global connection manager
+# Global connection manager instance
 ws_manager = ConnectionManager()
 
 
 async def websocket_endpoint(websocket: WebSocket):
-    """Handle individual WebSocket connections."""
+    """
+    Handle individual WebSocket connection lifecycle.
+    Implements a simple ping/pong heartbeat to keep connections alive through proxies.
+    """
     await ws_manager.connect(websocket)
     try:
         while True:
-            # Keep connection alive & handle client messages
+            # Awaiting client messages or heartbeats
             data = await websocket.receive_text()
-            # Client can send commands like speed changes
             try:
                 msg = json.loads(data)
                 if msg.get("type") == "ping":
@@ -65,40 +74,47 @@ async def websocket_endpoint(websocket: WebSocket):
                 pass
     except WebSocketDisconnect:
         ws_manager.disconnect(websocket)
+    except Exception as e:
+        logger.error(f"WebSocket error for client {id(websocket)}: {str(e)}")
+        ws_manager.disconnect(websocket)
 
 
 async def simulation_broadcast_loop(sim_state: dict, interval: float = 2.0):
     """
-    Background task that ticks the simulation and broadcasts updates.
-    Runs every `interval` seconds.
+    Background simulation loop.
+    Ticks simulation engines and broadcasts the global state to all connected clients.
     """
+    logger.info(f"Starting simulation broadcast loop (Interval: {interval}s)")
     while True:
         try:
-            # Tick simulation
+            # 1. Tick simulation engines
+            # In a heavy enterprise app, these might run in separate threads
             new_phase = sim_state["timeline"].tick()
-            crowd_result = sim_state["crowd_engine"].tick()
-            queue_result = sim_state["queue_engine"].tick()
+            sim_state["crowd_engine"].tick()
+            sim_state["queue_engine"].tick()
 
-            # Build update payload
+            # 2. Extract current state
+            venue = sim_state["venue"]
             timeline = sim_state["timeline"].get_state()
             heatmap = sim_state["crowd_engine"].get_heatmap_data()
             danger_zones = sim_state["crowd_engine"].get_danger_zones()
             queues = sim_state["queue_engine"].get_all_queues()
 
+            # 3. Build optimized payload
             update = {
                 "type": "tick",
                 "timeline": timeline,
                 "crowd": {
                     "heatmap": heatmap,
                     "danger_zones": danger_zones,
-                    "total_occupancy": sim_state["venue"].get_total_occupancy(),
-                    "occupancy_percentage": sim_state["venue"].get_occupancy_percentage(),
+                    "total_occupancy": venue.get_total_occupancy(),
+                    "occupancy_percentage": venue.get_occupancy_percentage(),
                 },
                 "queues": queues,
-                "gates": [g.to_dict() for g in sim_state["venue"].gates.values()],
+                "gates": [g.to_dict() for g in venue.gates.values()],
             }
 
-            # Add phase change event
+            # 4. Inject phase events
             if new_phase:
                 update["phase_change"] = {
                     "new_phase": new_phase.value,
@@ -106,7 +122,7 @@ async def simulation_broadcast_loop(sim_state: dict, interval: float = 2.0):
                     "description": sim_state["timeline"].current_config.description,
                 }
 
-            # Add alert if danger zones detected
+            # 5. Inject crowd priority alerts
             if danger_zones:
                 update["alert"] = {
                     "level": "warning",
@@ -114,10 +130,10 @@ async def simulation_broadcast_loop(sim_state: dict, interval: float = 2.0):
                     "zones": danger_zones,
                 }
 
+            # 6. Push to clients
             await ws_manager.broadcast(update)
 
         except Exception as e:
-            # Don't crash the loop on errors
-            pass
+            logger.error(f"Error in simulation broadcast loop: {str(e)}", exc_info=True)
 
         await asyncio.sleep(interval)

@@ -47,6 +47,22 @@ def _get_sim():
     return _sim_state
 
 
+# ── Monitoring & Health ───────────────────────────────────────
+
+@router.get("/health")
+async def health_check():
+    """Liveness probe for Cloud Run / K8s."""
+    return {"status": "alive", "service": "venueflow-ai"}
+
+@router.get("/ready")
+async def readiness_probe():
+    """Readiness probe verifying simulation state."""
+    sim = _get_sim()
+    if not sim:
+        raise HTTPException(status_code=503, detail="Simulation not ready")
+    return {"status": "ready", "venue": sim["venue"].name}
+
+
 # ── Endpoints ─────────────────────────────────────────────────
 
 @router.get("/venue")
@@ -139,6 +155,8 @@ async def chat(request: ChatRequest):
 
     danger_zones = sim["crowd_engine"].get_danger_zones()
     danger_info = ", ".join(f"{dz['name']} ({dz['density']:.0%})" for dz in danger_zones) or "None"
+    
+    is_emergency = timeline_state['current_phase'] == "emergency"
 
     response = get_ai_response(
         user_message=clean_message,
@@ -148,6 +166,7 @@ async def chat(request: ChatRequest):
         event_info=event_info,
         danger_zones=danger_info,
         user_zone=request.user_zone,
+        is_emergency=is_emergency,
     )
 
     return ChatResponse(**response)
