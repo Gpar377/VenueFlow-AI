@@ -8,8 +8,8 @@ from typing import Dict, Any, Optional, Tuple
 
 from app.config import settings
 from app.ai.prompts import (
-    ORCHESTRATOR_PROMPT, NAVIGATOR_PROMPT,
-    FOODIE_PROMPT, SAFETY_PROMPT, GENERAL_PROMPT,
+    ORCHESTRATOR_PROMPT, EVAC_COMMANDER_PROMPT,
+    RESOURCE_COORDINATOR_PROMPT, CRISIS_DIRECTOR_PROMPT, GENERAL_PROMPT,
 )
 
 # Lazy Gemini client
@@ -67,24 +67,23 @@ def _rule_based_routing(message: str) -> Tuple[str, float]:
     """Fallback rule-based routing when AI is unavailable."""
     msg = message.lower()
 
-    food_keywords = ["food", "eat", "hungry", "drink", "stall", "menu", "burger",
-                     "pizza", "queue", "wait time", "restroom", "toilet", "bathroom",
-                     "snack", "coffee", "chai", "noodle", "ice cream"]
-    nav_keywords = ["where", "how to get", "direction", "gate", "exit", "parking",
-                    "find", "locate", "seat", "zone", "way to", "entrance", "lot"]
-    safety_keywords = ["crowd", "danger", "emergency", "medical", "help", "crush",
-                       "first aid", "evacuation", "safety", "packed", "too many"]
+    resource_keywords = ["water", "food", "help", "doctor", "bleeding", "first aid", "shelter",
+                     "bandage", "medical", "injury", "triage", "safe"]
+    evac_keywords = ["where", "how to get", "direction", "exit", "stair", "stairwell",
+                    "find", "locate", "leave", "assembly", "way out", "door", "run"]
+    crisis_keywords = ["fire", "shooter", "smoke", "earthquake", "danger", "emergency", "collapse",
+                       "alarm", "warning", "trapped", "help me"]
 
-    food_score = sum(1 for k in food_keywords if k in msg)
-    nav_score = sum(1 for k in nav_keywords if k in msg)
-    safety_score = sum(1 for k in safety_keywords if k in msg)
+    resource_score = sum(1 for k in resource_keywords if k in msg)
+    evac_score = sum(1 for k in evac_keywords if k in msg)
+    crisis_score = sum(1 for k in crisis_keywords if k in msg)
 
-    if food_score > nav_score and food_score > safety_score:
-        return "foodie", 0.7
-    elif nav_score > food_score and nav_score > safety_score:
-        return "navigator", 0.7
-    elif safety_score > 0:
-        return "safety", 0.7
+    if crisis_score > 0:
+        return "crisis_director", 0.9
+    elif evac_score > resource_score and evac_score > crisis_score:
+        return "evac_commander", 0.7
+    elif resource_score > evac_score and resource_score > crisis_score:
+        return "resource_coordinator", 0.7
     return "general", 0.5
 
 
@@ -105,19 +104,19 @@ def get_ai_response(
     """
     # Step 1: Route the query
     if is_emergency:
-        agent = "safety"
+        agent = "crisis_director"
         confidence = 1.0
     else:
         agent, confidence = route_query(user_message)
 
     # Step 2: Build specialist prompt with full context
-    if agent == "navigator":
-        prompt = NAVIGATOR_PROMPT.format(venue_context=venue_context)
-    elif agent == "foodie":
-        stall_info = queue_info  # Queue info includes stall details
-        prompt = FOODIE_PROMPT.format(stall_info=stall_info, queue_info=queue_info)
-    elif agent == "safety":
-        prompt = SAFETY_PROMPT.format(
+    if agent == "evac_commander":
+        prompt = EVAC_COMMANDER_PROMPT.format(venue_context=venue_context)
+    elif agent == "resource_coordinator":
+        resource_info = queue_info  # In crisis mode, queue_info represents triage queues
+        prompt = RESOURCE_COORDINATOR_PROMPT.format(resource_info=resource_info)
+    elif agent == "crisis_director":
+        prompt = CRISIS_DIRECTOR_PROMPT.format(
             crowd_info=crowd_info,
             alerts_info=alerts_info,
             danger_zones=danger_zones,
@@ -125,7 +124,7 @@ def get_ai_response(
     else:
         prompt = GENERAL_PROMPT.format(
             venue_context=venue_context,
-            queue_info=queue_info,
+            resource_info=queue_info,
             event_info=event_info,
         )
 
@@ -151,28 +150,20 @@ def _get_fallback_response(
     user_message: str, agent: str,
     venue_context: str, queue_info: str,
 ) -> Dict[str, Any]:
-    """Rule-based fallback responses when Gemini is unavailable."""
+    """Rule-based fallback responses when Gemini network is unavailable (Catastrophic Network Failure)."""
     msg = user_message.lower()
 
     responses = {
-        "navigator": "Head to the nearest concourse area for directional signage. "
-                     "Gate A (North) and Gate E (South) are the main entrances. "
-                     "Check the venue map for the shortest route to your destination.",
-        "foodie": "There are 8 food stalls across all concourses. "
-                  "During halftime, the West Concourse stalls (Noodle Bar, Chai & Snacks) "
-                  "typically have shorter queues. Check the Queue Board for live wait times.",
-        "safety": "Titan Arena is currently operating normally. "
-                  "Emergency exits are available at Gate H (East). "
-                  "First Aid stations are at North and South Concourses.",
-        "general": "Welcome to Titan Arena! I'm your AI assistant. "
-                   "I can help with directions, food recommendations, queue times, "
-                   "and safety information. What do you need?",
+        "evac_commander": "NETWORK OFFLINE. Proceed immediately to the nearest illuminated stairwell. DO NOT USE ELEVATORS. Follow exit signs to the ground floor Assembly Points.",
+        "resource_coordinator": "NETWORK OFFLINE. Central Triage is located in the Grand Lobby. If you cannot reach the lobby safely, shelter in place and block your door against smoke.",
+        "crisis_director": "CRITICAL ALERT: NETWORK OFFLINE. An emergency has been detected at Grand Horizon Resort. Evacuate immediately via stairs or shelter in place if corridors are hot or filled with smoke.",
+        "general": "NETWORK OFFLINE. The resort is under an active emergency protocol. Please evacuate via the nearest stairs or seek safety.",
     }
 
     return {
         "message": responses.get(agent, responses["general"]),
         "agent": agent,
-        "confidence": 0.3,
+        "confidence": 0.99,
         "user_zone": "unknown",
         "fallback": True,
     }
