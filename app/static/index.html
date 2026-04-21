@@ -34,7 +34,7 @@
                 </div>
                 <div>
                     <h1 class="brand-name">VenueFlow<span class="brand-ai">AI</span></h1>
-                    <p class="brand-tagline" id="venue-name-display">Titan Arena — 50,000 Capacity</p>
+                    <p class="brand-tagline" id="venue-name-display">Grand Horizon Resort — 15,000 Capacity</p>
                 </div>
             </div>
 
@@ -173,13 +173,13 @@
                     <!-- Chat Messages -->
                     <div class="chat-messages" id="chat-messages" role="log" aria-label="Chat conversation" aria-live="polite">
                         <div class="chat-bubble system">
-                            <div class="bubble-avatar" aria-hidden="true">🏟️</div>
+                            <div class="bubble-avatar" aria-hidden="true">🏨</div>
                             <div class="bubble-content">
-                                <p>Welcome to <strong>Titan Arena!</strong> I'm your AI assistant powered by multiple specialized agents:</p>
+                                <p>Welcome to <strong>Grand Horizon Resort!</strong> I'm your AI assistant powered by multiple specialized agents:</p>
                                 <ul>
-                                    <li>🧭 <strong>Navigator</strong> — Directions &amp; exit routes</li>
-                                    <li>🍕 <strong>Foodie</strong> — Food recs &amp; queue times</li>
-                                    <li>🛡️ <strong>Safety</strong> — Crowd alerts &amp; emergencies</li>
+                                    <li>🧭 <strong>Evac Commander</strong> — Triage & evacuation plans</li>
+                                    <li>🍎 <strong>Resource Coordinator</strong> — Logistics & essential supplies</li>
+                                    <li>🛡️ <strong>Crisis Director</strong> — Command and control overwatch</li>
                                 </ul>
                                 <p>Ask me anything!</p>
                             </div>
@@ -189,28 +189,24 @@
                     <!-- Quick Actions -->
                     <div class="chat-quick-actions" role="group" aria-label="Quick questions">
                         <button class="quick-btn" data-message="Where should I eat? What has the shortest queue?" aria-label="Best food option">🍔 Best food?</button>
-                        <button class="quick-btn" data-message="How do I get to the North Stand from here?" aria-label="Directions">🧭 Directions</button>
-                        <button class="quick-btn" data-message="What's the nearest restroom with short wait?" aria-label="Nearest restroom">🚻 Restroom</button>
+                        <button class="quick-btn" data-message="How do I get to the Pool Deck from here?" aria-label="Directions">🧭 Directions</button>
+                        <button class="quick-btn" data-message="Where is the nearest triage center?" aria-label="Nearest restroom">🏥 Triage</button>
                         <button class="quick-btn" data-message="Is it safe right now? Any crowded areas to avoid?" aria-label="Safety check">🛡️ Safety</button>
-                        <button class="quick-btn" data-message="What's my best exit strategy? I'm parked in Lot A." aria-label="Exit strategy">🚗 Exit plan</button>
+                        <button class="quick-btn" data-message="What's my best evacuation route?" aria-label="Exit strategy">🏃 Evaculate</button>
                     </div>
 
                     <!-- Input -->
                     <form class="chat-input-form" id="chat-form" role="search" aria-label="Send a message">
                         <div class="chat-input-wrapper">
                             <select id="user-zone-select" aria-label="Your current zone" class="zone-select">
-                                <option value="north">📍 North Stand</option>
-                                <option value="south">South Stand</option>
-                                <option value="east">East Wing</option>
-                                <option value="west">West Wing</option>
-                                <option value="ne">NE Corner</option>
-                                <option value="nw">NW Corner</option>
-                                <option value="se">SE Corner</option>
-                                <option value="sw">SW Corner</option>
-                                <option value="concourse_n">North Concourse</option>
-                                <option value="concourse_s">South Concourse</option>
-                                <option value="concourse_e">East Concourse</option>
-                                <option value="concourse_w">West Concourse</option>
+                                <option value="north_tower">📍 North Tower</option>
+                                <option value="south_tower">South Tower</option>
+                                <option value="east_wing">East Wing</option>
+                                <option value="west_wing">West Wing</option>
+                                <option value="grand_lobby">Grand Lobby</option>
+                                <option value="pool_deck">Pool Deck</option>
+                                <option value="conference_center">Conference Center</option>
+                                <option value="staff_quarters">Staff Quarters</option>
                             </select>
                             <input type="text" id="chat-input" placeholder="Ask me anything about the venue..." autocomplete="off" maxlength="500" aria-label="Type your message">
                             <button type="submit" class="send-btn" id="chat-send-btn" aria-label="Send message">
@@ -364,12 +360,12 @@
                         <div class="sim-control-group">
                             <label>Jump to Phase:</label>
                             <div class="phase-buttons" role="group" aria-label="Jump to event phase">
-                                <button class="phase-jump-btn" data-phase="pre_event">Pre-Event</button>
-                                <button class="phase-jump-btn" data-phase="near_kickoff">Rush Hour</button>
-                                <button class="phase-jump-btn" data-phase="first_half">1st Half</button>
-                                <button class="phase-jump-btn" data-phase="halftime">Halftime</button>
-                                <button class="phase-jump-btn" data-phase="post_event">Post-Event</button>
-                                <button class="phase-jump-btn emergency-btn shadow-red" data-phase="emergency">🚨 TRIGGER EMERGENCY</button>
+                                <button class="phase-jump-btn" data-phase="morning_rush">Morning</button>
+                                <button class="phase-jump-btn" data-phase="lunch_peak">Lunch</button>
+                                <button class="phase-jump-btn" data-phase="afternoon_lull">Afternoon</button>
+                                <button class="phase-jump-btn" data-phase="dinner_service">Dinner</button>
+                                <button class="phase-jump-btn" data-phase="night_ops">Night</button>
+                                <button class="phase-jump-btn emergency-btn shadow-red" data-phase="critical_emergency">🚨 EVACUATE</button>
                             </div>
                         </div>
                     </div>

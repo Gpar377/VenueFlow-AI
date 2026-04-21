@@ -9,20 +9,16 @@ const VenueMap = (() => {
     let zones = {};
     let tooltipEl = null;
 
-    // Zone polygon paths for a stadium shape
+    // Zone polygon paths for a rectilinear resort floorplan shape
     const ZONE_PATHS = {
-        north:       { d: 'M120,40 L380,40 L360,100 L140,100 Z', cx: 250, cy: 65 },
-        south:       { d: 'M140,400 L360,400 L380,460 L120,460 Z', cx: 250, cy: 435 },
-        east:        { d: 'M400,140 L460,120 L460,380 L400,360 Z', cx: 435, cy: 250 },
-        west:        { d: 'M40,120 L100,140 L100,360 L40,380 Z', cx: 65, cy: 250 },
-        ne:          { d: 'M360,100 L380,40 L460,120 L400,140 Z', cx: 400, cy: 100 },
-        nw:          { d: 'M40,120 L120,40 L140,100 L100,140 Z', cx: 100, cy: 100 },
-        se:          { d: 'M400,360 L460,380 L380,460 L360,400 Z', cx: 400, cy: 400 },
-        sw:          { d: 'M100,360 L40,380 L120,460 L140,400 Z', cx: 100, cy: 400 },
-        concourse_n: { d: 'M140,100 L360,100 L340,140 L160,140 Z', cx: 250, cy: 118 },
-        concourse_s: { d: 'M160,360 L340,360 L360,400 L140,400 Z', cx: 250, cy: 382 },
-        concourse_e: { d: 'M360,160 L400,140 L400,360 L360,340 Z', cx: 382, cy: 250 },
-        concourse_w: { d: 'M100,140 L140,160 L140,340 L100,360 Z', cx: 118, cy: 250 },
+        grand_lobby:       { d: 'M180,180 L320,180 L320,320 L180,320 Z', cx: 250, cy: 250 },
+        north_tower:       { d: 'M180,20 L320,20 L320,170 L180,170 Z', cx: 250, cy: 95 },
+        south_tower:       { d: 'M180,330 L320,330 L320,480 L180,480 Z', cx: 250, cy: 405 },
+        east_wing:         { d: 'M330,180 L480,180 L480,320 L330,320 Z', cx: 405, cy: 250 },
+        west_wing:         { d: 'M20,180 L170,180 L170,320 L20,320 Z', cx: 95, cy: 250 },
+        pool_deck:         { d: 'M330,20 L480,20 L480,170 L330,170 Z', cx: 405, cy: 95 },
+        conference_center: { d: 'M330,330 L480,330 L480,480 L330,480 Z', cx: 405, cy: 405 },
+        staff_quarters:    { d: 'M20,330 L170,330 L170,480 L20,480 Z', cx: 95, cy: 405 },
     };
 
     // Density to color mapping
@@ -55,22 +51,20 @@ const VenueMap = (() => {
         const bg = createSVGEl('rect', { x: 0, y: 0, width: 500, height: 500, fill: '#0d1321', rx: 12 });
         svg.appendChild(bg);
 
-        // Field (center)
+        // Atrium (center)
         const field = createSVGEl('rect', {
-            x: 160, y: 160, width: 180, height: 180, rx: 8,
+            x: 210, y: 210, width: 80, height: 80, rx: 4,
             fill: '#0f4c2d', stroke: '#1a7a47', 'stroke-width': 1.5, opacity: 0.7
         });
         svg.appendChild(field);
 
-        // Field markings
-        const fieldCenter = createSVGEl('circle', { cx: 250, cy: 250, r: 30, fill: 'none', stroke: '#1a7a47', 'stroke-width': 1 });
+        // Atrium markings
+        const fieldCenter = createSVGEl('circle', { cx: 250, cy: 250, r: 15, fill: 'none', stroke: '#1a7a47', 'stroke-width': 1 });
         svg.appendChild(fieldCenter);
-        const fieldLine = createSVGEl('line', { x1: 250, y1: 160, x2: 250, y2: 340, stroke: '#1a7a47', 'stroke-width': 1 });
-        svg.appendChild(fieldLine);
 
-        // Field label
+        // Atrium label
         const fieldText = createSVGEl('text', { x: 250, y: 254, 'text-anchor': 'middle', fill: '#1a7a47', 'font-size': 11, 'font-family': 'Outfit, sans-serif' });
-        fieldText.textContent = '⚽ PITCH';
+        fieldText.textContent = '🪴 ATRIUM';
         svg.appendChild(fieldText);
 
         // Create zone polygons
