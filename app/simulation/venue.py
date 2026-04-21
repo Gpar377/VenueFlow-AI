@@ -208,9 +208,9 @@ class Venue:
     such as total occupancy and venue-wide density.
     """
 
-    def __init__(self, capacity: int = 50000):
-        self.name = "Titan Arena"
-        self.sport = "Multi-Sport Stadium"
+    def __init__(self, capacity: int = 15000):
+        self.name = "Grand Horizon Resort"
+        self.sport = "Hospitality & Convention"
         self.capacity = capacity
         self.zones: Dict[str, Zone] = {}
         self.gates: Dict[str, Gate] = {}
@@ -226,23 +226,18 @@ class Venue:
         self._build_parking()
 
     def _build_zones(self):
-        """Create 8 seating zones + 4 concourse zones."""
+        """Create Resort Wings and Lobbies."""
         zone_defs = [
-            # Main stands (seating)
-            ("north", "North Stand", 8000, "seating", ["ne", "nw", "concourse_n"], 250, 50),
-            ("south", "South Stand", 8000, "seating", ["se", "sw", "concourse_s"], 250, 450),
-            ("east", "East Wing", 6000, "seating", ["ne", "se", "concourse_e"], 450, 250),
-            ("west", "West Wing", 6000, "seating", ["nw", "sw", "concourse_w"], 50, 250),
-            # Corner sections
-            ("ne", "North-East Corner", 3000, "seating", ["north", "east"], 400, 100),
-            ("nw", "North-West Corner", 3000, "seating", ["north", "west"], 100, 100),
-            ("se", "South-East Corner", 3000, "seating", ["south", "east"], 400, 400),
-            ("sw", "South-West Corner", 3000, "seating", ["south", "west"], 100, 400),
-            # Concourse areas (higher capacity, walkways)
-            ("concourse_n", "North Concourse", 4000, "concourse", ["north", "ne", "nw"], 250, 20),
-            ("concourse_s", "South Concourse", 4000, "concourse", ["south", "se", "sw"], 250, 480),
-            ("concourse_e", "East Concourse", 3000, "concourse", ["east", "ne", "se"], 480, 250),
-            ("concourse_w", "West Concourse", 3000, "concourse", ["west", "nw", "sw"], 20, 250),
+            # Main Guest Towers
+            ("north_tower", "North Tower", 1800, "seating", ["grand_lobby", "pool_deck"], 250, 50),
+            ("south_tower", "South Tower", 1800, "seating", ["grand_lobby", "pool_deck"], 250, 450),
+            ("east_wing", "East Wing", 1200, "seating", ["grand_lobby", "conference_center"], 450, 250),
+            ("west_wing", "West Wing (Spa)", 800, "seating", ["grand_lobby"], 50, 250),
+            # Corridors & Amenities
+            ("grand_lobby", "Grand Lobby", 3000, "concourse", ["north_tower", "south_tower", "east_wing", "west_wing", "pool_deck", "conference_center"], 250, 250),
+            ("pool_deck", "Pool & Recreation", 1500, "concourse", ["grand_lobby", "north_tower", "south_tower"], 150, 250),
+            ("conference_center", "Conference Center", 2500, "concourse", ["east_wing", "grand_lobby"], 400, 150),
+            ("staff_quarters", "Staff & Maintenance", 500, "concourse", ["grand_lobby"], 100, 400),
         ]
 
         for zid, name, cap, ztype, adj, x, y in zone_defs:
@@ -252,16 +247,16 @@ class Venue:
             )
 
     def _build_gates(self):
-        """Create entry/exit gates linked to concourse zones."""
+        """Create Exits and Elevators."""
         gate_defs = [
-            ("gate_a", "Gate A — Main Entrance", "concourse_n", 150, "entry"),
-            ("gate_b", "Gate B — North-East", "concourse_n", 120, "entry"),
-            ("gate_c", "Gate C — East Entry", "concourse_e", 120, "entry"),
-            ("gate_d", "Gate D — South-East", "concourse_s", 100, "entry"),
-            ("gate_e", "Gate E — South Main", "concourse_s", 150, "entry"),
-            ("gate_f", "Gate F — West Entry", "concourse_w", 120, "entry"),
-            ("gate_g", "Gate G — VIP Entrance", "concourse_w", 60, "entry"),
-            ("gate_h", "Gate H — Emergency Exit", "concourse_e", 200, "emergency"),
+            ("gate_a", "Main Entrance (Lobby)", "grand_lobby", 150, "entry"),
+            ("gate_b", "Poolside Exit", "pool_deck", 120, "entry"),
+            ("gate_c", "Conference Center Entrance", "conference_center", 200, "entry"),
+            ("gate_d", "North Stairwell Exit", "north_tower", 100, "emergency"),
+            ("gate_e", "South Stairwell Exit", "south_tower", 100, "emergency"),
+            ("gate_f", "East Wing Fire Escape", "east_wing", 80, "emergency"),
+            ("gate_g", "Staff Entrance", "staff_quarters", 60, "entry"),
+            ("gate_h", "Emergency Loading Dock", "staff_quarters", 200, "emergency"),
         ]
 
         for gid, name, zone_id, cap, gtype in gate_defs:
@@ -273,39 +268,24 @@ class Venue:
                 self.zones[zone_id].gates.append(gid)
 
     def _build_service_points(self):
-        """Create food stalls, restrooms, merchandise, and medical points."""
+        """Create restaurants, spa, merchandise, and medical triage."""
         service_defs = [
-            # Food stalls
-            ("food_1", "🍔 Burger Junction", "concourse_n", "food", 4, 2.5,
-             ["Classic Burger", "Cheese Burger", "Veggie Burger", "Fries", "Onion Rings"], 250),
-            ("food_2", "🍕 Pizza Corner", "concourse_n", "food", 3, 2.0,
-             ["Margherita", "Pepperoni", "Veggie Supreme", "Garlic Bread"], 300),
-            ("food_3", "🌮 Taco Stand", "concourse_e", "food", 3, 3.0,
-             ["Chicken Taco", "Beef Taco", "Veggie Bowl", "Nachos"], 200),
-            ("food_4", "🍦 Ice Cream Bar", "concourse_e", "food", 2, 4.0,
-             ["Vanilla Cone", "Chocolate Sundae", "Mango Sorbet", "Milkshake"], 180),
-            ("food_5", "🥤 Drinks Hub", "concourse_s", "food", 5, 5.0,
-             ["Cola", "Lemonade", "Water", "Energy Drink", "Coffee", "Hot Chocolate"], 150),
-            ("food_6", "🍗 BBQ Pit", "concourse_s", "food", 3, 1.5,
-             ["BBQ Wings", "Pulled Pork", "Grilled Corn", "Coleslaw"], 350),
-            ("food_7", "🍜 Noodle Bar", "concourse_w", "food", 3, 2.0,
-             ["Ramen", "Stir-fry Noodles", "Spring Rolls", "Dumplings"], 280),
-            ("food_8", "☕ Chai & Snacks", "concourse_w", "food", 2, 4.0,
-             ["Masala Chai", "Samosa", "Vada Pav", "Pani Puri", "Bhel"], 120),
+            # Dining
+            ("food_1", "🍽️ Oceanview Restaurant", "grand_lobby", "food", 6, 2.5, ["Steak", "Lobster", "Wine"], 850),
+            ("food_2", "🍹 Poolside Cabana Bar", "pool_deck", "food", 4, 4.0, ["Margarita", "Beer", "Snacks"], 300),
+            ("food_3", "☕ Lobby Cafe", "grand_lobby", "food", 3, 5.0, ["Coffee", "Pastries"], 150),
+            ("food_4", "🍱 Conference Banquet", "conference_center", "food", 8, 2.0, ["Buffet"], 500),
+            ("food_5", "💆 Spa Lounge", "west_wing", "food", 2, 2.0, ["Smoothie", "Tea"], 200),
             # Restrooms
-            ("restroom_1", "🚻 Restroom North-A", "concourse_n", "restroom", 8, 6.0, [], 0),
-            ("restroom_2", "🚻 Restroom North-B", "concourse_n", "restroom", 6, 6.0, [], 0),
-            ("restroom_3", "🚻 Restroom East", "concourse_e", "restroom", 6, 6.0, [], 0),
-            ("restroom_4", "🚻 Restroom South", "concourse_s", "restroom", 8, 6.0, [], 0),
-            ("restroom_5", "🚻 Restroom West", "concourse_w", "restroom", 6, 6.0, [], 0),
-            # Merchandise
-            ("merch_1", "🏆 Official Store", "concourse_n", "merchandise", 4, 1.5,
-             ["Team Jersey", "Cap", "Scarf", "Keychain", "Poster"], 800),
-            ("merch_2", "🧢 Fan Zone Shop", "concourse_s", "merchandise", 3, 1.5,
-             ["T-Shirt", "Flag", "Wristband", "Mug", "Sticker Pack"], 500),
-            # Medical
-            ("medical_1", "🏥 First Aid — North", "concourse_n", "medical", 2, 8.0, [], 0),
-            ("medical_2", "🏥 First Aid — South", "concourse_s", "medical", 2, 8.0, [], 0),
+            ("restroom_1", "🚻 Lobby Restrooms", "grand_lobby", "restroom", 6, 6.0, [], 0),
+            ("restroom_2", "🚻 Pool Restrooms", "pool_deck", "restroom", 4, 6.0, [], 0),
+            ("restroom_3", "🚻 Conference Restrooms", "conference_center", "restroom", 8, 6.0, [], 0),
+            # Retail
+            ("merch_1", "👜 Boutique Shop", "grand_lobby", "merchandise", 3, 1.5, ["Clothes", "Souvenirs"], 1200),
+            ("merch_2", "🏊‍♀️ Swim Shop", "pool_deck", "merchandise", 2, 2.0, ["Sunscreen", "Swimwear"], 400),
+            # Medical / Safety Triage
+            ("medical_1", "🏥 Central Triage (Lobby)", "grand_lobby", "medical", 4, 8.0, [], 0),
+            ("medical_2", "🏥 Poolside First Aid", "pool_deck", "medical", 2, 8.0, [], 0),
         ]
 
         for spid, name, zone_id, stype, servers, rate, items, price in service_defs:
@@ -319,10 +299,10 @@ class Venue:
     def _build_parking(self):
         """Create parking lots."""
         parking_defs = [
-            ("lot_a", "Parking Lot A — North", "gate_a", 3000),
-            ("lot_b", "Parking Lot B — East", "gate_c", 2500),
-            ("lot_c", "Parking Lot C — South", "gate_e", 2500),
-            ("lot_d", "Parking Lot D — West (VIP)", "gate_g", 1000),
+            ("lot_a", "Valet Parking", "gate_a", 500),
+            ("lot_b", "Self Parking Garage", "gate_a", 1500),
+            ("lot_c", "Event & Conference Parking", "gate_c", 1000),
+            ("lot_d", "Employee Parking", "gate_g", 300),
         ]
         for pid, name, gate, cap in parking_defs:
             self.parking_lots[pid] = ParkingLot(

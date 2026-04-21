@@ -9,145 +9,132 @@ from typing import Optional
 
 
 class EventPhase(str, Enum):
-    """Phases of a sporting event."""
-    PRE_EVENT = "pre_event"          # Gates open, fans arriving
-    EARLY_ARRIVAL = "early_arrival"  # 60-30 min before kickoff
-    NEAR_KICKOFF = "near_kickoff"    # 30-0 min before, rush hour
-    FIRST_HALF = "first_half"        # Game in progress
-    HALFTIME = "halftime"            # Break — mass movement to food/restrooms
-    SECOND_HALF = "second_half"      # Game in progress
-    FINAL_MINUTES = "final_minutes"  # Last 10 min — early leavers
-    POST_EVENT = "post_event"        # Mass exodus
-    EMERGENCY = "emergency"          # Manual override: evacuation
+    """Phases of Resort Operations."""
+    MORNING_RUSH = "morning_rush"          # Breakfast, check-outs
+    NORMAL_OPS = "normal_ops"              # Relaxing at pool, exploring
+    LUNCH_PEAK = "lunch_peak"              # Lunch rush
+    AFTERNOON_LULL = "afternoon_lull"      # Spa, excursions
+    DINNER_SERVICE = "dinner_service"      # Dinner rush
+    EVENING_EVENTS = "evening_events"      # Entertainment
+    NIGHT_OPS = "night_ops"                # Quiet
+    CRITICAL_EMERGENCY = "critical_emergency" # Manual override: evacuation
 
 
 @dataclass
 class PhaseConfig:
-    """Behavior parameters for each event phase."""
+    """Behavior parameters for each resort phase."""
     phase: EventPhase
     label: str
     duration_minutes: int
-    arrival_rate: float        # 0.0–1.0 — how fast people stream in
-    departure_rate: float      # 0.0–1.0 — how fast people leave
-    concourse_activity: float  # 0.0–1.0 — movement to food/restrooms
-    seat_occupancy_target: float  # target fill ratio
+    arrival_rate: float        # stream in from outside
+    departure_rate: float      # stream out
+    concourse_activity: float  # movement to restaurants/amenities
+    seat_occupancy_target: float  # room/lounge target fill ratio
     alert_probability: float   # chance of alerts per tick
     description: str
 
 
 # Phase configurations — realistic behavior
 PHASE_CONFIGS = {
-    EventPhase.PRE_EVENT: PhaseConfig(
-        phase=EventPhase.PRE_EVENT,
-        label="🎟️ Gates Open",
-        duration_minutes=60,
-        arrival_rate=0.15,
-        departure_rate=0.0,
+    EventPhase.MORNING_RUSH: PhaseConfig(
+        phase=EventPhase.MORNING_RUSH,
+        label="🌅 Morning Rush",
+        duration_minutes=120,
+        arrival_rate=0.1,
+        departure_rate=0.2,
+        concourse_activity=0.6,
+        seat_occupancy_target=0.4,
+        alert_probability=0.01,
+        description="Check-outs and breakfast rush. Lobbies and restaurants are busy.",
+    ),
+    EventPhase.NORMAL_OPS: PhaseConfig(
+        phase=EventPhase.NORMAL_OPS,
+        label="🏖️ Normal Ops",
+        duration_minutes=240,
+        arrival_rate=0.3,
+        departure_rate=0.1,
         concourse_activity=0.3,
-        seat_occupancy_target=0.1,
+        seat_occupancy_target=0.6,
         alert_probability=0.02,
-        description="Gates have opened. Early fans are arriving and exploring the venue.",
+        description="Guests exploring the resort. Pool area and lounges are active.",
     ),
-    EventPhase.EARLY_ARRIVAL: PhaseConfig(
-        phase=EventPhase.EARLY_ARRIVAL,
-        label="🚶 Fans Arriving",
-        duration_minutes=30,
-        arrival_rate=0.4,
-        departure_rate=0.0,
-        concourse_activity=0.5,
-        seat_occupancy_target=0.35,
-        alert_probability=0.03,
-        description="Steady stream of fans entering. Concourse areas getting busy.",
-    ),
-    EventPhase.NEAR_KICKOFF: PhaseConfig(
-        phase=EventPhase.NEAR_KICKOFF,
-        label="⚡ Rush Hour",
-        duration_minutes=30,
-        arrival_rate=0.85,
+    EventPhase.LUNCH_PEAK: PhaseConfig(
+        phase=EventPhase.LUNCH_PEAK,
+        label="🍔 Lunch Peak",
+        duration_minutes=90,
+        arrival_rate=0.1,
         departure_rate=0.0,
         concourse_activity=0.7,
         seat_occupancy_target=0.8,
-        alert_probability=0.08,
-        description="Peak arrival wave! Gates are congested. Concourses are packed.",
+        alert_probability=0.03,
+        description="Peak lunch hour. Heavy congestion near food and beverage wings.",
     ),
-    EventPhase.FIRST_HALF: PhaseConfig(
-        phase=EventPhase.FIRST_HALF,
-        label="⚽ First Half",
-        duration_minutes=45,
-        arrival_rate=0.05,
-        departure_rate=0.0,
-        concourse_activity=0.15,
-        seat_occupancy_target=0.92,
-        alert_probability=0.02,
-        description="Match in progress. Most fans are seated. Concourses are quiet.",
-    ),
-    EventPhase.HALFTIME: PhaseConfig(
-        phase=EventPhase.HALFTIME,
-        label="🍔 Halftime Break",
-        duration_minutes=20,
-        arrival_rate=0.0,
-        departure_rate=0.02,
-        concourse_activity=0.85,
-        seat_occupancy_target=0.55,
-        alert_probability=0.06,
-        description="HALFTIME! Massive rush to food stalls and restrooms. Queue times peak.",
-    ),
-    EventPhase.SECOND_HALF: PhaseConfig(
-        phase=EventPhase.SECOND_HALF,
-        label="⚽ Second Half",
-        duration_minutes=45,
-        arrival_rate=0.0,
-        departure_rate=0.03,
+    EventPhase.AFTERNOON_LULL: PhaseConfig(
+        phase=EventPhase.AFTERNOON_LULL,
+        label="🍹 Afternoon Lull",
+        duration_minutes=180,
+        arrival_rate=0.4,
+        departure_rate=0.1,
         concourse_activity=0.2,
-        seat_occupancy_target=0.85,
+        seat_occupancy_target=0.9,
         alert_probability=0.02,
-        description="Match resumes. Fans returning to seats. Some trickle departures.",
+        description="Check-ins arriving. Corridors are quiet, rooms filling up.",
     ),
-    EventPhase.FINAL_MINUTES: PhaseConfig(
-        phase=EventPhase.FINAL_MINUTES,
-        label="⏱️ Final Minutes",
-        duration_minutes=10,
+    EventPhase.DINNER_SERVICE: PhaseConfig(
+        phase=EventPhase.DINNER_SERVICE,
+        label="🍽️ Dinner Service",
+        duration_minutes=120,
         arrival_rate=0.0,
-        departure_rate=0.15,
-        concourse_activity=0.4,
-        seat_occupancy_target=0.7,
-        alert_probability=0.05,
-        description="Last 10 minutes. Some fans leaving early to beat traffic.",
-    ),
-    EventPhase.POST_EVENT: PhaseConfig(
-        phase=EventPhase.POST_EVENT,
-        label="🚗 Mass Exit",
-        duration_minutes=45,
-        arrival_rate=0.0,
-        departure_rate=0.7,
-        concourse_activity=0.6,
-        seat_occupancy_target=0.1,
+        departure_rate=0.05,
+        concourse_activity=0.8,
+        seat_occupancy_target=0.5,
         alert_probability=0.04,
-        description="Full-time whistle! Everyone heading for exits. Peak congestion at gates.",
+        description="Mass movement to dining areas and bars.",
     ),
-    EventPhase.EMERGENCY: PhaseConfig(
-        phase=EventPhase.EMERGENCY,
-        label="🚨 EVACUATION",
+    EventPhase.EVENING_EVENTS: PhaseConfig(
+        phase=EventPhase.EVENING_EVENTS,
+        label="🎉 Evening Events",
+        duration_minutes=180,
+        arrival_rate=0.0,
+        departure_rate=0.0,
+        concourse_activity=0.4,
+        seat_occupancy_target=0.9,
+        alert_probability=0.02,
+        description="Concerts and resort entertainment. High density in event halls.",
+    ),
+    EventPhase.NIGHT_OPS: PhaseConfig(
+        phase=EventPhase.NIGHT_OPS,
+        label="🌙 Night Ops",
+        duration_minutes=480,
+        arrival_rate=0.0,
+        departure_rate=0.0,
+        concourse_activity=0.05,
+        seat_occupancy_target=0.99,
+        alert_probability=0.01,
+        description="Most guests asleep. Essential corridors and security only.",
+    ),
+    EventPhase.CRITICAL_EMERGENCY: PhaseConfig(
+        phase=EventPhase.CRITICAL_EMERGENCY,
+        label="🚨 EVACUATION ALARM",
         duration_minutes=0,
         arrival_rate=0.0,
         departure_rate=1.0,
-        concourse_activity=0.9,
+        concourse_activity=0.99,
         seat_occupancy_target=0.0,
         alert_probability=1.0,
-        description="EMERGENCY EVACUATION IN PROGRESS. All gates open. Proceed to nearest exit.",
+        description="CRITICAL EMERGENCY. Evacuation protocol engaged. Directing guests to Assembly Points.",
     ),
 }
 
 
 PHASE_ORDER = [
-    EventPhase.PRE_EVENT,
-    EventPhase.EARLY_ARRIVAL,
-    EventPhase.NEAR_KICKOFF,
-    EventPhase.FIRST_HALF,
-    EventPhase.HALFTIME,
-    EventPhase.SECOND_HALF,
-    EventPhase.FINAL_MINUTES,
-    EventPhase.POST_EVENT,
+    EventPhase.MORNING_RUSH,
+    EventPhase.NORMAL_OPS,
+    EventPhase.LUNCH_PEAK,
+    EventPhase.AFTERNOON_LULL,
+    EventPhase.DINNER_SERVICE,
+    EventPhase.EVENING_EVENTS,
+    EventPhase.NIGHT_OPS,
 ]
 
 
@@ -250,8 +237,8 @@ class EventTimeline:
 
     def jump_to_phase(self, phase: EventPhase):
         """Jump directly to a specific phase (for demo purposes)."""
-        if phase == EventPhase.EMERGENCY:
-            self.override_phase = EventPhase.EMERGENCY
+        if phase == EventPhase.CRITICAL_EMERGENCY:
+            self.override_phase = EventPhase.CRITICAL_EMERGENCY
             return
             
         self.override_phase = None

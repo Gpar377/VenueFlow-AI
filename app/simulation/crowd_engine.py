@@ -65,10 +65,10 @@ class CrowdEngine:
                 continue
             
             # During emergency, only departures happen, no arrivals!
-            if config.phase == EventPhase.EMERGENCY:
+            if config.phase == EventPhase.CRITICAL_EMERGENCY:
                 continue
 
-            if gate.gate_type == "emergency" and config.phase != EventPhase.EMERGENCY:
+            if gate.gate_type == "emergency" and config.phase != EventPhase.CRITICAL_EMERGENCY:
                 continue
 
             # Base arrival rate scaled by phase
@@ -97,7 +97,7 @@ class CrowdEngine:
                 continue
 
             base_departure_rate = config.departure_rate
-            if config.phase == EventPhase.EMERGENCY:
+            if config.phase == EventPhase.CRITICAL_EMERGENCY:
                 # Everyone is rushing out
                 base_departure_rate = 1.0
 
@@ -106,7 +106,7 @@ class CrowdEngine:
             )
             
             # Massive increase during emergency (e.g., 5x faster evacuation simulation step)
-            if config.phase == EventPhase.EMERGENCY:
+            if config.phase == EventPhase.CRITICAL_EMERGENCY:
                 departure_count = int(zone.current_occupancy * 0.15) # 15% drop per tick
                 
             departure_count = min(departure_count, zone.current_occupancy)
@@ -168,7 +168,7 @@ class CrowdEngine:
 
     def _update_gate_flows(self, config):
         """Update gate flow rates based on current phase."""
-        is_emergency = self.timeline.current_phase == EventPhase.EMERGENCY
+        is_emergency = self.timeline.current_phase == EventPhase.CRITICAL_EMERGENCY
 
         for gate in self.venue.gates.values():
             if is_emergency:

@@ -60,7 +60,7 @@ class QueueEngine:
             # Update queue length
             sp.queue_length = max(0, sp.queue_length + new_arrivals - served)
             
-            if phase == EventPhase.EMERGENCY:
+            if phase == EventPhase.CRITICAL_EMERGENCY:
                 sp.queue_length = max(0, sp.queue_length - int(sp.queue_length * 0.5))
 
             # Add noise for organic feel
@@ -96,10 +96,10 @@ class QueueEngine:
         }
         base = base_rates.get(sp.service_type, 1.0)
 
-        if config.phase == EventPhase.EMERGENCY:
+        if config.phase == EventPhase.CRITICAL_EMERGENCY:
             return 0.0
 
-        # Phase multiplier — halftime = huge food/restroom rush
+        # Phase multiplier — peak hours = huge food rush
         phase_mult = config.concourse_activity
 
         # Zone density — more people nearby = more joiners
@@ -157,15 +157,15 @@ class QueueEngine:
         phase = self.timeline.current_phase
         wt = sp.wait_time_minutes
 
-        if phase == EventPhase.EMERGENCY:
+        if phase == EventPhase.CRITICAL_EMERGENCY:
             return "EVACUATE IMMEDIATELY. DO NOT WAIT IN QUEUE."
-        elif phase == EventPhase.HALFTIME:
-            return "Wait 10-15 min — queues peak during halftime"
-        elif phase == EventPhase.FIRST_HALF:
-            return "Now is a great time — most fans are seated!"
-        elif phase == EventPhase.NEAR_KICKOFF:
-            return "Try during the first 10 min of the match"
-        elif phase == EventPhase.SECOND_HALF and wt < 5:
+        elif phase == EventPhase.LUNCH_PEAK:
+            return "Wait 10-15 min — queues peak during lunch"
+        elif phase == EventPhase.MORNING_RUSH:
+            return "Busy morning — grab coffee early or wait"
+        elif phase in [EventPhase.AFTERNOON_LULL, EventPhase.NORMAL_OPS]:
+            return "Now is a great time — queues are short!"
+        elif phase == EventPhase.DINNER_SERVICE and wt < 5:
             return "Good time — queue is short right now"
         elif wt > 15:
             return f"Queue is long ({wt:.0f} min). Try again in 10-15 min."
